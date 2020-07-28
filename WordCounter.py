@@ -1,7 +1,7 @@
 import re
 from collections import OrderedDict
 import pandas as pd
-import tqdm from tqdm
+from tqdm import tqdm
 import sys
 import fire
 import csv
@@ -27,11 +27,13 @@ def process(file_name):
             pt_phrases.append(pt)
             gi_phrases.append(gi)
 
-    for phrase in pt_phrases:
+    print(" * Processando PT:")
+    for phrase in tqdm(pt_phrases):
 
         pt_word_list = word_counter(phrase, pt_word_list)
 
-    for phrase in gi_phrases:
+    print(" * Processando GI:")
+    for phrase in tqdm(gi_phrases):
 
         gi_word_list = word_counter(phrase, gi_word_list)
 
