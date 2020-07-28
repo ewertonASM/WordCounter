@@ -1,38 +1,72 @@
 import re
 from collections import OrderedDict
 import pandas as pd
+import tqdm from tqdm
 import sys
-
-notFoundWords = []
-wordList = {}
-
-with open(sys.argv[1]) as textFile, open('words.txt') as dictionaryFile:
-
-    dictionary = {x[:-1].lower() for x in dictionaryFile}
-
-    for line in textFile:
-        for word in re.split(r'\W|\d', line):
-            if word:
-                if word in wordList:
-                    wordList.update({word: wordList[word]+1})
-                else:
-                    wordList.update({word: 1})
-                if not word.lower() in dictionary and word.lower() not in notFoundWords:
-                    notFoundWords.append(word.lower())
+import fire
+import csv
 
 
-wordListNumOrd = OrderedDict(
-    sorted(wordList.items(), key=lambda t: t[1], reverse=True))
+def process(file_name):
 
-wordListAlphaOrd = OrderedDict(
-    sorted(wordList.items()))
+    pt_phrases = []
+    gi_phrases = []
 
-numberOrdFile_df = pd.DataFrame.from_dict(wordListNumOrd, orient="index")
-numberOrdFile_df.to_csv("output/wordListNumOrd.csv")
-alphaOrdFile_df = pd.DataFrame.from_dict(wordListAlphaOrd, orient="index")
-alphaOrdFile_df.to_csv("output/wordListAlphaOrd.csv")
+    pt_word_list = {}
+    gi_word_list = {}
 
-with open("output/NotFoundWords.txt", 'w+') as NotFoundFile:
+    with open(file_name) as f:
 
-    for i in notFoundWords:
-        NotFoundFile.write(i+'\n')
+        data = csv.reader(f)
+
+        for item in data:
+
+            pt = item[0]
+            gi = item[1]
+
+            pt_phrases.append(pt)
+            gi_phrases.append(gi)
+
+    for phrase in pt_phrases:
+
+        pt_word_list = word_counter(phrase, pt_word_list)
+
+    for phrase in gi_phrases:
+
+        gi_word_list = word_counter(phrase, gi_word_list)
+
+
+    sort_and_csv_generate(pt_word_list,"PT")
+    sort_and_csv_generate(gi_word_list,"GI")
+
+def sort_and_csv_generate(word_list, name):
+
+    word_list_num_ord = OrderedDict(
+        sorted(word_list.items(), key=lambda t: t[1], reverse=True))
+
+    word_list_alpha_ord = OrderedDict(
+        sorted(word_list.items()))
+
+    number_ord_file_df = pd.DataFrame.from_dict(word_list_num_ord, orient="index")
+    number_ord_file_df.to_csv(f'output/{name}_word_list_num_ord.csv')
+
+    alpha_ord_file_df = pd.DataFrame.from_dict(word_list_alpha_ord, orient="index")
+    alpha_ord_file_df.to_csv(f'output/{name}_word_list_alpha_ord.csv')
+
+def word_counter(phrase,word_list):
+
+    for word in re.split(r'\W|\d', phrase):
+
+        if word:
+            if word in word_list:
+                word_list.update({word: word_list[word]+1})
+            else:
+                word_list.update({word: 1})
+
+    return word_list
+
+
+
+if __name__ == '__main__':
+
+    fire.Fire(process)
